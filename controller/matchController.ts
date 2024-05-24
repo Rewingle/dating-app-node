@@ -12,7 +12,7 @@ export async function matchController(req: Request, res: Response) {
     const { from, to } = req.body;
 
     console.log('Request to matchController')
-    const client = new MongoClient('mongodb+srv://user:kestane32@cluster0.qhgkn77.mongodb.net/dating-app?retryWrites=true&w=majority', {
+    const client = new MongoClient(process.env.MONGO_URI as string, {
         serverApi: {
             version: ServerApiVersion.v1,
             strict: true,
