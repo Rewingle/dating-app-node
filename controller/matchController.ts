@@ -33,7 +33,7 @@ export async function matchController(req: Request, res: Response) {
     } finally {
         console.log('finally')
         await client.close();
-        res.status(200).send;
+        res.status(200);
     }
 
     async function findUsers(from?: number, to?: number) {
