@@ -28,8 +28,14 @@ export const registerController = async (req: TypedRequestBody<RegisterUser>, re
         await client.connect()
         console.log('connection')
         const collection = client.db('dating-app').collection('Users');
+        const isExist = await collection.findOne({ email: data.email })
+        if(isExist){
+            console.log('CONFLICT')
+            res.status(409).send({message:'User Exist'})
+            return
+        }
         const convertedData = await convertToUser(data);
-        console.log(convertedData)
+        
         await collection.insertOne(convertedData).then(resp => {
             console.log(resp);
             res.status(200).send(resp);
