@@ -24,39 +24,33 @@ export const registerController = async (req: TypedRequestBody<RegisterUser>, re
         }
     });
 
-    console.log(data)
     try {
-        await client.connect().then(() => {
-            const collection = client.db('dating-app').collection('Users');
-            collection.insertOne(convertToUser(data)).then(resp => {
-                console.log(resp);
-                res.status(200).send(resp);
-            }).catch(err => {
-                console.log(err);
-                res.status(500).send(err)
-            })
-        }).catch((err) => {
-            console.log(err)
-            res.status(500).send(err)
-        });
-
-
+        await client.connect()
         console.log('connection')
+        const collection = client.db('dating-app').collection('Users');
+        const convertedData = await convertToUser(data);
+        console.log(convertedData)
+        await collection.insertOne(convertedData).then(resp => {
+            console.log(resp);
+            res.status(200).send(resp);
+        }).catch(err => {
+            console.log(err);
+            res.status(500).send(err)
+        })
+
+
     } catch {
         res.status(500)
     } finally {
-        console.log('finally')
-        await client.close();
-        res.status(200);
+
+        await client.close().then(() => console.log('connection closed'));
 
     }
 }
-const convertToUser = (data: RegisterUser) => {
-
-
+const convertToUser = async (data: RegisterUser) => {
 
     var dateNow = new Date(Date.now())
-    const hashedPassword = hashPassword(data.passwordHash, 8)
+    const hashedPassword = await hashPassword(data.passwordHash, 8)
     console.log(hashedPassword)
     if (!hashedPassword) {
         throw new Error('Password Hash Error')
@@ -90,16 +84,12 @@ const convertToUser = (data: RegisterUser) => {
     return user;
 }
 
-const hashPassword = (password: string, saltRounds: number): any => {
-    bcrypt.genSalt(saltRounds, (err: any, salt: any) => {
-        if (err) {
-            throw new Error('Error in password salt')
-        }
-        bcrypt.hash(password, salt, (err: any, hash: any) => {
-            if (err) {
-                return new Error('Error with hashing')
-            }
-            return hash as string
-        })
-    })
+const hashPassword = async (password: string, saltRounds: number) => {
+
+    const hash = bcrypt.hash(password, saltRounds)
+    if (!hash) {
+        throw new Error('Hash Error')
+    }
+    return hash
+
 }
