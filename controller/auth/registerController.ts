@@ -29,16 +29,20 @@ export const registerController = async (req: TypedRequestBody<RegisterUser>, re
         console.log('connection')
         const collection = client.db('dating-app').collection('Users');
         const isExist = await collection.findOne({ email: data.email })
-        if(isExist){
+        if (isExist) {
             console.log('CONFLICT')
-            res.status(409).send({message:'User Exist'})
+            res.status(409).send({ message: 'User Exist' })
             return
         }
         const convertedData = await convertToUser(data);
-        
-        await collection.insertOne(convertedData).then(resp => {
+
+        await collection.insertOne(convertedData).then(async (resp) => {
             console.log(resp);
-            res.status(200).send(resp);
+            if (!resp.insertedId) {
+                res.status(500)
+            }
+            const hashedPassword = await hashPassword(resp.insertedId.toString(), 8)
+            res.status(200).send({ authToken: hashedPassword });
         }).catch(err => {
             console.log(err);
             res.status(500).send(err)
@@ -49,7 +53,7 @@ export const registerController = async (req: TypedRequestBody<RegisterUser>, re
         res.status(500)
     } finally {
 
-        await client.close().then(() => console.log('connection closed'));
+        await client.close().then(() => console.log(process.env.DB_CONN_CLOSED));
 
     }
 }

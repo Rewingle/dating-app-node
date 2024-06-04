@@ -13,6 +13,8 @@ export const loginController = async (req: TypedRequestBody<{ email: string, pas
         return
     } else {
 
+        const data = req.body
+
         const client = new MongoClient(process.env.MONGO_URI as string, {
             serverApi: {
                 version: ServerApiVersion.v1,
@@ -23,22 +25,38 @@ export const loginController = async (req: TypedRequestBody<{ email: string, pas
 
         try {
             await client.connect();
+            const collection = client.db('dating-app').collection('Users');
+
+            const isEmailExist = await collection.findOne({ email: data.email }).then(
+                async (resp) => {
+                    console.log(resp)
+                    res.status(200)
+                    return
+                }
+            ).catch(err => {
+                console.log(err);
+                res.status(500)
+                return
+            }
+            )
 
         } catch {
             res.status(500)
+        } finally{
+            await client.close().then(()=>console.log('CLOSED'))
         }
         /* RETURN THIS FROM DATABASE */
         const password = 'zaxona123'
 
 
-        if (req.body.password == password) {
+/*         if (req.body.password == password) {
             const token = jwt.sign({ userId: 123 }, 'your-secret-key', {
                 expiresIn: '6m',
             });
             res.status(200).send({ token: token })
         } else {
             res.status(403)
-        }
+        } */
 
     }
 }
